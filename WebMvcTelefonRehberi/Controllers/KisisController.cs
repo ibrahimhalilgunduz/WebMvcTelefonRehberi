@@ -1,29 +1,136 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
+using WebMvcTelefonRehberi.BLManager.Abstract;
 using WebMvcTelefonRehberi.Domain;
+using WebMvcTelefonRehberi.Models.Dtos;
 
 namespace WebMvcTelefonRehberi.Controllers
 {
     public class KisisController : Controller
     {
+        private readonly IKisiManager manager;
+        private readonly IMapper mapper;
         private readonly BaseeDbContext _context;
 
-        public KisisController(BaseeDbContext context)
+        public KisisController(IKisiManager manager, IMapper mapper, BaseeDbContext context)
         {
+            this.manager = manager;
+            this.mapper = mapper;
             _context = context;
         }
-
-        // GET: Kisis
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            return View(await _context.Kisiler.ToListAsync());
+            var kisiler = manager.GetAll(null);
+            return View(kisiler);
         }
 
+
+        [HttpGet]
+        public IActionResult Create()
+        {
+            var kisi = new KisiCreateDto();
+
+            return View(kisi);
+        }
+
+        [HttpPost]
+        public IActionResult Create(KisiCreateDto input)
+        {
+            if (ModelState.IsValid)
+            {
+
+                var kisi = mapper.Map<KisiCreateDto, Kisi>(input);
+
+                manager.CheckForGsm(input.Gsm);
+
+
+                manager.Add(kisi);
+                RedirectToAction("Index", "Kisis");
+            }
+
+            return View();
+        }
+        [HttpGet]
+        public IActionResult Edit(int id)
+        {
+            var kisi = manager.Find(id);
+            var updateDto = mapper.Map<Kisi, KisiCreateDto>(kisi);
+
+
+            return View(updateDto);
+        }
+
+
+
+        [HttpPost]
+        public IActionResult Edit(KisiCreateDto input)
+        {
+
+
+            if (ModelState.IsValid)
+            {
+                var kisi = mapper.Map<KisiCreateDto, Kisi>(input);
+                manager.Update(kisi);
+                return RedirectToAction("Index", "Kisis");
+                //if (!manager.CheckForGsm(input.Gsm))
+                //{
+                //    manager.Update(kisi);
+                //    return RedirectToAction("Index", "Kisis");
+                //}
+                //else
+                //    ModelState.AddModelError("", "Telefon numarasi yanliş girilmiş");
+            }
+
+
+            //if (ModelState.IsValid)
+            //{
+            //    Kisi m = new Kisi();
+            //    m.Gsm = input.Gsm;
+            //    m.Id = input.Id;
+            //    m.Adi = input.Adi;
+            //    m.Soyadi = input.Soyadi;
+            //    m.CreateDate = input.CreateDate;
+            //    m.Email = input.Email;
+
+
+
+
+            //    manager.Update(m);
+            //    RedirectToAction("Index", "Kisis");
+            //}
+
+
+
+
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult Delete(int id)
+        {
+            var entity = manager.Find(id);
+            return View(entity);
+        }
+
+        // POST: Kisis/Delete/5
+
+        [HttpPost]
+        public IActionResult Delete(Kisi input)
+        {
+
+
+
+            manager.Delete(input);
+            return RedirectToAction("Index", "Kisis");
+
+
+
+
+
+
+        }
         // GET: Kisis/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -42,111 +149,5 @@ namespace WebMvcTelefonRehberi.Controllers
             return View(kisi);
         }
 
-        // GET: Kisis/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Kisis/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Adi,Soyadi,Email,Gsm,Id,CreateDate")] Kisi kisi)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(kisi);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(kisi);
-        }
-
-        // GET: Kisis/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var kisi = await _context.Kisiler.FindAsync(id);
-            if (kisi == null)
-            {
-                return NotFound();
-            }
-            return View(kisi);
-        }
-
-        // POST: Kisis/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Adi,Soyadi,Email,Gsm,Id,CreateDate")] Kisi kisi)
-        {
-            if (id != kisi.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(kisi);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!KisiExists(kisi.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(kisi);
-        }
-
-        // GET: Kisis/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var kisi = await _context.Kisiler
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (kisi == null)
-            {
-                return NotFound();
-            }
-
-            return View(kisi);
-        }
-
-        // POST: Kisis/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var kisi = await _context.Kisiler.FindAsync(id);
-            _context.Kisiler.Remove(kisi);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool KisiExists(int id)
-        {
-            return _context.Kisiler.Any(e => e.Id == id);
-        }
     }
 }

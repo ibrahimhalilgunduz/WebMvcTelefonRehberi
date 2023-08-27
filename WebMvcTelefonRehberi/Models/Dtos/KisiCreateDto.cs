@@ -31,5 +31,6 @@ namespace WebMvcTelefonRehberi.Models.Dtos
         public DateTime CreateDate { get; set; }
 
 
+
     }
 }
