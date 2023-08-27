@@ -41,13 +41,26 @@ namespace WebMvcTelefonRehberi.Controllers
             if (ModelState.IsValid)
             {
 
+
                 var kisi = mapper.Map<KisiCreateDto, Kisi>(input);
 
-                manager.CheckForGsm(input.Gsm);
+
+                try
+                {
+                    manager.CheckForGsm(input.Gsm);
 
 
-                manager.Add(kisi);
-                RedirectToAction("Index", "Kisis");
+                    manager.Add(kisi);
+                }
+                catch (System.Exception ex)
+                {
+
+                    ModelState.AddModelError("", ex.Message);
+                    return View();
+                }
+
+
+                return RedirectToAction("Index", "Kisis");
             }
 
             return View();
