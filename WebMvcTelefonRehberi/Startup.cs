@@ -99,7 +99,7 @@ namespace WebMvcTelefonRehberi
 
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Kisis}/{action=Index}/{id?}");
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
             });
         }
     }
